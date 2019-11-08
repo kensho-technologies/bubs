@@ -7,7 +7,6 @@ install:
   - pip install --upgrade setuptools pipenv
   - pip install -r dev-requirements.txt
 
-
 matrix:
   include:
   - name: "Lint and static analysis"

@@ -1,0 +1,6 @@
+funcy>=1.10
+Keras==2.2.4
+numpy>=1.10.0
+pylint
+pytest
+segtok>=1.5.7

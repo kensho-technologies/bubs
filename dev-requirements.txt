@@ -5,4 +5,4 @@ pylint
 pytest
 pytest-cov
 segtok>=1.5.7
-tensorflow==1.7.1
+tensorflow==1.12.2

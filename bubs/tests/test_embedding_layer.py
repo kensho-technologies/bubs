@@ -67,7 +67,7 @@ class TestEmbeddingLayer(unittest.TestCase):
     def test_default_weights(self):
         # check that default weights get loaded ok
         weights = load_weights_from_npz()
-        context_embedding_layer = ContextualizedEmbedding(self.max_token_seq_len, weights)
+        context_embedding_layer = ContextualizedEmbedding(self.max_token_seq_len, weights)  # noqa
 
 
     def test_custom_layer(self):

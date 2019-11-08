@@ -1,0 +1,26 @@
+language: python
+cache: pip
+dist: xenial
+
+install:
+  - pip install --upgrade pip
+  - pip install --upgrade setuptools pipenv
+  - pip install -r dev-requiements.txt
+
+matrix:
+  include:
+  - name: "Lint and static analysis"
+    python: "3.6"
+    script:
+      - ./scripts/copyright_line_check.sh
+      - pylint --rcfile=.pylintrc bubs
+  - name: "Python 3.6 unit tests"
+    python: "3.6"
+    script:
+      - pytest --cov=bubs bubs
+  - name: "Python 3.7 unit tests"
+    python: "3.7"
+    script:
+      - pytest --cov=bubs bubs
+after_success:
+  - coveralls

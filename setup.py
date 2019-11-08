@@ -1,4 +1,4 @@
-# Copyright 2019 Kensho Technologies, LLC.
+# Copyright 2019-present Kensho Technologies, LLC.
 import codecs
 import logging
 import os
@@ -34,15 +34,6 @@ def find_version():
     raise RuntimeError("Unable to find version string.")
 
 
-def find_name():
-    """Only define name in one place"""
-    name_file = read_file("__init__.py")
-    name_match = re.search(r'^__name__ = ["\']([^"\']*)["\']', name_file, re.M)
-    if name_match:
-        return name_match.group(1)
-    raise RuntimeError("Unable to find name string.")
-
-
 def find_long_description():
     """Return the content of the README.rst file."""
     return read_file('../README.md')
@@ -51,7 +42,7 @@ def find_long_description():
 REQUIRED_PACKAGES = ["funcy>=1.10", "Keras==2.2.4", "numpy>=1.10.0", "segtok>=1.5.7"]
 
 setup(
-    name=find_name(),
+    name=PACKAGE_NAME,
     version=find_version(),
     description='Keras Implementation of Flair\'s Contextualized Embeddings',
     long_description=find_long_description(),

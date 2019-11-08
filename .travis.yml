@@ -5,7 +5,11 @@ dist: xenial
 install:
   - pip install --upgrade pip
   - pip install --upgrade setuptools pipenv
+<<<<<<< HEAD
   - pip install -r dev-requirements.txt
+=======
+  - pip install -r dev-requiements.txt
+>>>>>>> ca901e6d60f14b6727eb3ea687e8c0fb08820325
 
 matrix:
   include:

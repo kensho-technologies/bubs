@@ -3,4 +3,6 @@ Keras==2.2.4
 numpy>=1.10.0
 pylint
 pytest
+pytest-cov
 segtok>=1.5.7
+tensorflow==1.7.1

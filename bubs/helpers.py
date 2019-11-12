@@ -7,10 +7,10 @@ from .tokenizer import RegexTokenizer
 
 
 class InputEncoder:
-    """Object that prepares inputs to the ContextualizedEmbedding layer from text"""
+    """Object that prepares inputs to the ContextualizedEmbedding layer from text."""
 
     def __init__(self, max_token_sequence_len, max_char_sequence_len):
-        """Initialize and look up a few special character codes from CHAR_TO_INT"""
+        """Initialize and look up a few special character codes from CHAR_TO_INT."""
         self.max_token_sequence_len = max_token_sequence_len
         self.max_char_sequence_len = max_char_sequence_len
 
@@ -19,27 +19,27 @@ class InputEncoder:
 
     @property
     def start_sentence_value(self,):
-        """Each encoded sentence will start with this value"""
+        """Each encoded sentence will start with this value."""
         return self.char_to_int["\n"]
 
     @property
     def space_char_code(self,):
-        """In the model input, all tokens will be separated by exactly one space character code"""
+        """In the model input, all tokens will be separated by exactly one space character code."""
         return self.char_to_int[" "]
 
     @property
     def unk_char_code(self,):
-        """Every character absent from our char_to_int dict will be mapped onto this code"""
+        """Every character absent from our char_to_int dict will be mapped onto this code."""
         return self.char_to_int["<unk>"]
 
     @property
     def end_sentence_value(self,):
-        """We will append this value to the end of each sentence"""
+        """We will append this value to the end of each sentence."""
         return self.char_to_int[" "]
 
     @property
     def char_pad_value(self,):
-        """Short sentences will be padded with this value"""
+        """Short sentences will be padded with this value."""
         return self.char_to_int[" "]
 
     def input_batches_from_raw_text(self, raw_text, batch_size=32):
@@ -64,7 +64,6 @@ class InputEncoder:
             document_index_batches: list of lists of (start, end) tuples indicating spans where each
                 token came from in raw_text. Outer list over batches, inner list over sentences
         """
-
         parsed_text = split_sentences_and_tokenize_raw_text(
             raw_text, self.max_token_sequence_len, self.max_char_sequence_len - 2
         )  # -2 for special start and end characters
@@ -117,7 +116,6 @@ class InputEncoder:
                 'backward_mask_input':mask of same shape as back_index_input, with 0's where
                     padded and 1's where real tokens
         """
-
         token_spans = get_space_joined_indices_from_token_lists(tokenized_sentences)
 
         # Pad everything to longest sentence length
@@ -155,7 +153,7 @@ class InputEncoder:
         return model_inputs
 
     def _encode_and_index(self, tokenized_sentences, token_spans):
-        """Encode a list of tokenized sentences and record appropriate output indices
+        """Encode a list of tokenized sentences and record appropriate output indices.
 
         Translate sentences into forward and backward lists of character codes with appropriate
         start and end values; return also the locations where token-level embeddings will be
@@ -193,7 +191,7 @@ class InputEncoder:
         )
 
     def _check_labels(self, labels, num_sentences):
-        """Check that labels are one-hot encoded and have correct shape"""
+        """Check that labels are one-hot encoded and have correct shape."""
         max_token_sequence_len = self.max_token_sequence_len
         labels_shape = labels.shape
         if not (labels.sum(axis=2) == 1).all():
@@ -212,7 +210,7 @@ class InputEncoder:
             )
 
     def _prepare_index_array(self, index_list):
-        """Make a 2D array where each row is a padded array of character-level token-end indices"""
+        """Make a 2D array where each row is a padded array of character-level token-end indices."""
         pad_len = self.max_token_sequence_len
         batch_size = len(index_list)
         padding_index = 0
@@ -224,7 +222,7 @@ class InputEncoder:
         return padded_sentences
 
     def _prepare_mask_array(self, index_list):
-        """Make 2D array where each row contains 1's where real tokens were and 0's where padded"""
+        """Make 2D array where each row contains 1's where real tokens were and 0's where padded."""
         pad_len = self.max_token_sequence_len
         batch_size = len(index_list)
         mask = np.zeros((batch_size, pad_len))
@@ -233,7 +231,7 @@ class InputEncoder:
         return mask
 
     def _encode_and_get_output_index_list(self, token_list, span_list):
-        """Transform a tokenized sentence into lists of character codes and lists of indices
+        """Transform a tokenized sentence into lists of character codes and lists of indices.
 
         Each encoded sentence starts with a special start symbol. Forward and backward sentences
         are reverses of each other (except for the start symbol). If tokenized sentence exceeds
@@ -281,7 +279,7 @@ class InputEncoder:
 
 
 def _pad_sentences(encoded_sentence_list, pad_len, char_pad_value):
-    """Take in a list of lists of character codes, return padded 2D array"""
+    """Take in a list of lists of character codes, return padded 2D array."""
     padded_sentences = np.full(
         (len(encoded_sentence_list), pad_len), char_pad_value, dtype=np.int16
     )
@@ -291,7 +289,7 @@ def _pad_sentences(encoded_sentence_list, pad_len, char_pad_value):
 
 
 def _check_token_spans(token, token_start, token_end, prev_index):
-    """Check that token fits into its span; output a helpful message is it doesn't"""
+    """Check that token fits into its span; output a helpful message is it doesn't."""
     if len(token) > (token_end - token_start):
         raise ValueError(
             "Token is longer than its allocated span.\n"
@@ -309,7 +307,7 @@ def _check_token_spans(token, token_start, token_end, prev_index):
 
 
 def _reverse_inputs_and_indices(encoded_sentence_forward, output_index_list_forward):
-    """Reverse sequence of character codes and list of output indices"""
+    """Reverse sequence of character codes and list of output indices."""
     if len(encoded_sentence_forward) >= 2:  # sentence should at least have start, end characters
         start_sentence_value = first(encoded_sentence_forward)
         end_sentence_value = last(encoded_sentence_forward)
@@ -413,7 +411,7 @@ def _align_sentence_spans_for_long_sentences(original_sentence_spans, trimmed_se
 
 
 def _shift_spans_to_start_at_zero(spans):
-    """Shift all spans in the sentence by the same amount so the first token starts at zero
+    """Shift all spans in the sentence by the same amount so the first token starts at zero.
 
     Args:
         spans: list of lists of character-level spans, one span per token, one list per sentence
@@ -512,7 +510,7 @@ def _split_long_sentences(token_lists, span_lists, max_tokens, max_chars):
 
 
 def get_space_joined_indices_from_token_lists(token_lists):
-    """Compute character-level locations of a set of tokens assuming that they are separated by ' '
+    """Compute character-level locations of a set of tokens assuming that they are separated by ' '.
 
     Args:
         token_lists: list of list of str
@@ -549,7 +547,6 @@ def create_document_indices_from_sentence_indices(span_lists, token_lists, docum
     Returns:
         document_span_lists: A list of lists of tuples of int (start, end)
     """
-
     sentence_lengths = [last(span_list)[-1] for span_list in span_lists]
     sentence_starts = []
     offset = 0

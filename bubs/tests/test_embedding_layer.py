@@ -88,8 +88,7 @@ class TestEmbeddingLayer(unittest.TestCase):
             self.assertTupleEqual(expected_embedding_shape, backward_embedding.shape)
 
     def test_make_lstm_weights_for_keras(self):
-        """define a few asymmetric matrices, distinct from each other, as dummy weights. Check that
-        they get assembled correctly into keras lstm weights list."""
+        """Define a few asymmetric matrices, distinct from each other, as dummy weights."""
         char_lstm_dim = 10
         char_embedding_dim = 5
         weight_input_to_hidden = np.tri(4 * char_lstm_dim, char_embedding_dim)

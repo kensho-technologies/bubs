@@ -10,7 +10,7 @@ from segtok.tokenizer import (
 
 
 def _html_tokenize(sentence):
-    """Tokenize string into words, not splitting URIS or emails, wrapping segtok:word_tokenizer
+    """Tokenize string into words, not splitting URIS or emails, wrapping segtok:word_tokenizer.
 
     It does not split URIs or e-mail addresses. It does not treat html escapes
     as single characters outside of these instances.(eg. &amp; -> '&', 'amp', ';')
@@ -31,7 +31,7 @@ def _html_tokenize(sentence):
 
 
 class RegexTokenizer:
-    """Fast regex-based tokenizer, wrapping around https://github.com/fnl/segtok"""
+    """Fast regex-based tokenizer, wrapping around https://github.com/fnl/segtok."""
 
     def __init__(self, max_characters_per_token=None):
         """Set up tokenizer specific flags.

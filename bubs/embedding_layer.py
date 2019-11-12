@@ -17,7 +17,7 @@ DEFAULT_WEIGHTS_PATH = os.path.join(
 def make_lstm_weights_for_keras(
     weight_input_to_hidden, weight_hidden_to_hidden, bias_input_to_hidden, bias_hidden_to_hidden
 ):
-    """Package individual weight matrices extracted from a pytorch LSTM into a keras format
+    """Make individual weight matrices extracted from a pytorch LSTM into a keras format.
 
     The names refer to the variables in the LSTM equation, e.g. see
     http://philipperemy.github.io/images/keras_stateful_lstm_2.png for an example.
@@ -40,7 +40,7 @@ def make_lstm_weights_for_keras(
 
 
 def load_weights_from_npz(weights_path=None):
-    """Load weights for the ContextualizedEmbedding layer from a numpy npz archive
+    """Load weights for the ContextualizedEmbedding layer from a numpy npz archive.
 
     Args:
         weights_path: (optional) path to a npz file. If None, we will use
@@ -102,7 +102,7 @@ def batch_indexing(inputs):
 
 
 def multiply(inputs):
-    """Multiply a 3d tensor by a 2d tensor along the first two dimensions
+    """Multiply a 3d tensor by a 2d tensor along the first two dimensions.
 
     Args:
         inputs: a list of [tensor1, tensor2], one 3d and one 2d. Both tensors should have the same
@@ -119,7 +119,7 @@ def multiply(inputs):
 
 class ContextualizedEmbedding(Layer):
     def __init__(self, max_token_sequence_len, weights, **kwargs):
-        """Initialize custom layer, lstm weights and static character embeddings"""
+        """Initialize custom layer, lstm weights and static character embeddings."""
         super().__init__(**kwargs)
 
         self.output_dim = 2  # (number of sentences by number of tokens)
@@ -146,7 +146,7 @@ class ContextualizedEmbedding(Layer):
         self.mask_multiply_layer = None
 
     def build(self, input_shape):
-        """Build custom layer"""
+        """Build custom layer."""
         self.char_embed_forward = Embedding(
             self._char_vocab_len,
             self._char_embedding_dim,
@@ -193,7 +193,7 @@ class ContextualizedEmbedding(Layer):
         super().build(input_shape)
 
     def call(self, inputs):
-        """Compute forward and backward character-level contextualized embeddings from inputs"""
+        """Compute forward and backward character-level contextualized embeddings from inputs."""
         (
             forward_input,
             backward_input,
@@ -224,12 +224,12 @@ class ContextualizedEmbedding(Layer):
         return [forward_output, backward_output]
 
     def compute_output_shape(self, input_shape):
-        """Output shape is (batch size) x (number of tokens) x (character lstm dimension)"""
+        """Output shape is (batch size) x (number of tokens) x (character lstm dimension)."""
         shape = (input_shape[2][0], input_shape[2][1], self._char_lstm_dim)
         return [shape, shape]
 
     def get_config(self):
-        """Necessary in case we want to serialize a model including this custom layer"""
+        """Necessary in case we want to serialize a model including this custom layer."""
         base_config = super().get_config()
         base_config["max_token_sequence_len"] = self.max_token_sequence_len
         base_config["weights"] = dict({

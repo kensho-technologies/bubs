@@ -8,9 +8,7 @@ from keras.optimizers import Adam
 import numpy as np
 
 from ..embedding_layer import (
-    ContextualizedEmbedding,
-    load_weights_from_npz,
-    make_lstm_weights_for_keras,
+    ContextualizedEmbedding, load_weights_from_npz, make_lstm_weights_for_keras
 )
 from ..helpers import InputEncoder
 
@@ -63,12 +61,10 @@ class TestEmbeddingLayer(unittest.TestCase):
         )
         cls.model.compile(optimizer=Adam(), loss="categorical_crossentropy")
 
-
     def test_default_weights(self):
         # check that default weights get loaded ok
         weights = load_weights_from_npz()
         context_embedding_layer = ContextualizedEmbedding(self.max_token_seq_len, weights)  # noqa
-
 
     def test_custom_layer(self):
         """Build a dummy Keras model using the custom layer. Check the output dimensions."""

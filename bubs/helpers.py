@@ -218,7 +218,7 @@ class InputEncoder:
         for i in range(batch_size):
             clipped_len = min(len(index_list[i]), pad_len)
             padded_sentences[i, :, 0] = i
-            padded_sentences[i, pad_len - clipped_len :, 1] = index_list[i][:clipped_len]
+            padded_sentences[i, pad_len - clipped_len:, 1] = index_list[i][:clipped_len]
         return padded_sentences
 
     def _prepare_mask_array(self, index_list):
@@ -227,7 +227,7 @@ class InputEncoder:
         batch_size = len(index_list)
         mask = np.zeros((batch_size, pad_len))
         for i, inds in enumerate(index_list):
-            mask[i, pad_len - len(inds) :] = 1
+            mask[i, pad_len - len(inds):] = 1
         return mask
 
     def _encode_and_get_output_index_list(self, token_list, span_list):

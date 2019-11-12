@@ -7,3 +7,4 @@ pytest-cov
 segtok>=1.5.7
 tensorflow==1.13.1
 pydocstyle>=4.0.0,<5
+isort>=4.0.0,<5

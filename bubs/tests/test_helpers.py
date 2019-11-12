@@ -5,16 +5,10 @@ import funcy
 import numpy as np
 
 from ..helpers import (
-    InputEncoder,
-    _align_sentence_spans_for_long_sentences,
-    _check_token_spans,
-    _pad_sentences,
-    _reverse_inputs_and_indices,
-    _shift_spans_to_start_at_zero,
-    _split_long_sentences,
-    create_document_indices_from_sentence_indices,
-    get_space_joined_indices_from_token_lists,
-    split_sentences_and_tokenize_raw_text,
+    InputEncoder, _align_sentence_spans_for_long_sentences, _check_token_spans, _pad_sentences,
+    _reverse_inputs_and_indices, _shift_spans_to_start_at_zero, _split_long_sentences,
+    create_document_indices_from_sentence_indices, get_space_joined_indices_from_token_lists,
+    split_sentences_and_tokenize_raw_text
 )
 
 
@@ -874,7 +868,7 @@ class TestHelpers(unittest.TestCase):
         # check that tokens are actually in the raw_text at the correct locations
         for idx_list, token_list in zip(document_indices, tokens):
             for span, token in zip(idx_list, token_list):
-                self.assertEqual(token, raw_text[span[0] : span[1]])
+                self.assertEqual(token, raw_text[span[0]: span[1]])
 
         # Test for document that starts with white space - make sure document spans are
         # appropriately shifted

@@ -236,6 +236,6 @@ class ContextualizedEmbedding(Layer):
             "forward_lstm_weights": self._forward_lstm_weights,
             "backward_lstm_weights": self._backward_lstm_weights,
             "char_embed_weights_forward": self._char_embeddings_forward,
-            "char_embed_weights_back":  self._char_embeddings_backward
+            "char_embed_weights_back": self._char_embeddings_backward
         })
         return base_config

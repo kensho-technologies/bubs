@@ -2,10 +2,7 @@
 import funcy
 from segtok.segmenter import split_single, to_unix_linebreaks
 from segtok.tokenizer import (
-    split_contractions,
-    split_possessive_markers,
-    web_tokenizer,
-    word_tokenizer,
+    split_contractions, split_possessive_markers, web_tokenizer, word_tokenizer
 )
 
 

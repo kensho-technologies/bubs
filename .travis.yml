@@ -13,9 +13,7 @@ matrix:
     python: "3.6"
     script:
       - ./scripts/copyright_line_check.sh
-      - pylint --rcfile=.pylintrc bubs
-      - pydocstyle --config=.pydocstyle_test bubs
-      - pydocstyle --config=.pydocstyle bubs
+      - ./scripts/lint.sh
   - name: "Python 3.6 unit tests"
     python: "3.6"
     script:

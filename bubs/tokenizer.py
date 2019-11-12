@@ -28,7 +28,7 @@ def _html_tokenize(sentence):
 
 
 class RegexTokenizer:
-    """Fast regex-based tokenizer, wrapping around https://github.com/fnl/segtok """
+    """Fast regex-based tokenizer, wrapping around https://github.com/fnl/segtok ."""
 
     def __init__(self, max_characters_per_token=None):
         """Set up tokenizer specific flags.

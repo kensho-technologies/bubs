@@ -1,7 +1,10 @@
 # Bubs
 
-Bubs is a Keras/Tensorflow implementation of the Flair Contextualized Embeddings (https://alanakbik.github.io/papers/coling2018.pdf), limited only to  `news-forward-fast` and `news-backward-fast`.
+Bubs is a Keras/TensorFlow reimplementation of the Flair Contextualized Embeddings (https://alanakbik.github.io/papers/coling2018.pdf). It was developed as a building block for use in Keras/TensorFlow natural language models by [Yuliya Dovzhenko](https://github.com/ydovzhenko) and the [Kensho Technologies AI Research Team](https://www.kensho.com/) ([full contributor list](https://github.com/kensho-technologies/bubs/blob/master/AUTHORS.md)).
+ 
+----------------------------------------------
 
+Bubs implements two types of Flair embeddings:  `news-forward-fast` and `news-backward-fast`.
 
 Bubs consists of two parts:
 * ContextualizedEmbedding: a Keras custom layer, which computes the contextualized embeddings. It has two outputs corresponding to the `news-forward-fast` and `news-backward-fast` embeddings.
@@ -47,8 +50,7 @@ from keras.layers import Input
 from keras.models import Model
 from keras.optimizers import Adam
 
-from bubs import ContextualizedEmbedding
-from bubs.embedding_layer import load_weights_from_npz
+from bubs import ContextualizedEmbedding, load_weights_from_npz
 from bubs.helpers import InputEncoder
 
 

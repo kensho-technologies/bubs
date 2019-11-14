@@ -1,6 +1,6 @@
 # Bubs
 
-Bubs is a Keras/TensorFlow reimplementation of the Flair Contextualized Embeddings (https://alanakbik.github.io/papers/coling2018.pdf). It was developed as a building block for use in Keras/TensorFlow natural language models by [Yuliya Dovzhenko](https://github.com/ydovzhenko) at the [Kensho Technologies AI Research Team](https://www.kensho.com/).
+Bubs is a Keras/TensorFlow reimplementation of the Flair Contextualized Embeddings (https://alanakbik.github.io/papers/coling2018.pdf). It was developed as a building block for use in Keras/TensorFlow natural language models by [Yuliya Dovzhenko](https://github.com/ydovzhenko) and the [Kensho Technologies AI Research Team](https://www.kensho.com/) ([full contributor list](https://github.com/kensho-technologies/bubs/blob/master/AUTHORS.md)).
  
 ----------------------------------------------
 

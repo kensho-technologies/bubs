@@ -70,13 +70,13 @@ def load_weights_from_npz(weights_path=None):
         weights_from_npz["bias_hidden_to_hidden_back"],
     )
     char_embed_weights_forward = weights_from_npz["char_embed_weights_forward"]
-    char_embed_weights_back = weights_from_npz["char_embed_weights_back"]
+    char_embed_weights_backward = weights_from_npz["char_embed_weights_back"]
 
     return {
         "forward_lstm_weights": forward_lstm_weights,
         "backward_lstm_weights": backward_lstm_weights,
         "char_embed_weights_forward": char_embed_weights_forward,
-        "char_embed_weights_back": char_embed_weights_back,
+        "char_embed_weights_backward": char_embed_weights_backward,
     }
 
 
@@ -118,7 +118,7 @@ def multiply(inputs):
 
 
 class ContextualizedEmbedding(Layer):
-    def __init__(self, max_token_sequence_len, weights, **kwargs):
+    def __init__(self, max_token_sequence_len, custom_weights, **kwargs):
         """Initialize custom layer, lstm weights and static character embeddings."""
         super().__init__(**kwargs)
 
@@ -128,11 +128,11 @@ class ContextualizedEmbedding(Layer):
         # Look up length of the known character vocabulary
         self._char_vocab_len = len(CHAR_TO_INT)
 
-        self._forward_lstm_weights = weights["forward_lstm_weights"]
-        self._backward_lstm_weights = weights["backward_lstm_weights"]
+        self._forward_lstm_weights = custom_weights["forward_lstm_weights"]
+        self._backward_lstm_weights = custom_weights["backward_lstm_weights"]
 
-        self._char_embeddings_forward = weights["char_embed_weights_forward"]
-        self._char_embeddings_backward = weights["char_embed_weights_back"]
+        self._char_embeddings_forward = custom_weights["char_embed_weights_forward"]
+        self._char_embeddings_backward = custom_weights["char_embed_weights_backward"]
 
         _, self._char_embedding_dim = self._char_embeddings_forward.shape
         self._char_lstm_dim, _ = self._forward_lstm_weights[1].shape
@@ -232,10 +232,26 @@ class ContextualizedEmbedding(Layer):
         """Necessary in case we want to serialize a model including this custom layer."""
         base_config = super().get_config()
         base_config["max_token_sequence_len"] = self.max_token_sequence_len
-        base_config["weights"] = dict({
+        base_config["custom_weights"] = dict({
             "forward_lstm_weights": self._forward_lstm_weights,
             "backward_lstm_weights": self._backward_lstm_weights,
             "char_embed_weights_forward": self._char_embeddings_forward,
-            "char_embed_weights_back": self._char_embeddings_backward
+            "char_embed_weights_backward": self._char_embeddings_backward
         })
         return base_config
+
+    @classmethod
+    def from_config(cls, config, custom_objects=None):
+        config['custom_weights']['forward_lstm_weights'] = [
+            np.array(arr) for arr in config['custom_weights']['forward_lstm_weights']
+        ]
+        config['custom_weights']['backward_lstm_weights'] = [
+            np.array(arr) for arr in config['custom_weights']['backward_lstm_weights']
+        ]
+        config['custom_weights']['char_embed_weights_forward'] = np.array(
+            config['custom_weights']['char_embed_weights_forward']
+        )
+        config['custom_weights']['char_embed_weights_backward'] = np.array(
+            config['custom_weights']['char_embed_weights_backward']
+        )
+        return super(ContextualizedEmbedding, cls).from_config(config, )

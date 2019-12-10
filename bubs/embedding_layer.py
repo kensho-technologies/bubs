@@ -242,7 +242,7 @@ class ContextualizedEmbedding(Layer):
 
     @classmethod
     def from_config(cls, config, custom_objects=None):
-        """Necessary because weights arrays turn into lists of lists upon pickling."""
+        """Turn lists of lists back into numpy arrays upon deserialization."""
         config['custom_weights']['forward_lstm_weights'] = [
             np.array(arr) for arr in config['custom_weights']['forward_lstm_weights']
         ]

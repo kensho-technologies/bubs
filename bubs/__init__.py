@@ -1,4 +1,4 @@
 # Copyright 2019 Kensho Technologies, LLC.
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from .embedding_layer import ContextualizedEmbedding, load_weights_from_npz  # noqa

@@ -5,7 +5,7 @@ pylint>=2.4.0,<3
 pytest
 pytest-cov
 segtok>=1.5.7
-tensorflow==1.13.1
+tensorflow==1.15.2
 pydocstyle>=4.0.0,<5
 isort>=4.0.0,<5
 flake8>=3.0.0,<4

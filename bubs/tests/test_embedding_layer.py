@@ -2,10 +2,10 @@
 import os
 import unittest
 
-from keras.layers import Input
-from keras.models import Model
-from keras.optimizers import Adam
 import numpy as np
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
 
 from ..embedding_layer import (
     ContextualizedEmbedding, load_weights_from_npz, make_lstm_weights_for_keras

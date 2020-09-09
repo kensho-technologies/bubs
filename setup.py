@@ -39,7 +39,7 @@ def find_long_description():
     return read_file('../README.md')
 
 
-REQUIRED_PACKAGES = ["funcy>=1.10", "Keras==2.2.4", "numpy>=1.10.0", "segtok>=1.5.7"]
+REQUIRED_PACKAGES = ["funcy>=1.10", "numpy>=1.10.0", "segtok>=1.5.7", "tensorflow>=1.13"]
 
 setup(
     name=PACKAGE_NAME,

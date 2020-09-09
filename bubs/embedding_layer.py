@@ -1,9 +1,10 @@
 # Copyright 2019 Kensho Technologies, LLC.
 import os
 
-import keras.backend as K
-from keras.layers import LSTM, Embedding, Lambda, Layer
+
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras.layers import LSTM, Embedding, Lambda, Layer
 
 from .char_to_int import CHAR_TO_INT
 
@@ -98,7 +99,7 @@ def batch_indexing(inputs):
     embeddings, indices = inputs
     # this will break on deserialization if we simply import tensorflow
     # we have to use keras.backend.tf instead of tensorflow
-    return K.tf.gather_nd(embeddings, indices)
+    return tf.gather_nd(embeddings, indices)
 
 
 def multiply(inputs):
@@ -114,7 +115,7 @@ def multiply(inputs):
     x, y = inputs
     # this will break on deserialization if we simply import tensorflow
     # we have to use keras.backend.tf instead of tensorflow
-    return K.tf.einsum("ijk,ij->ijk", x, y)
+    return tf.einsum("ijk,ij->ijk", x, y)
 
 
 class ContextualizedEmbedding(Layer):

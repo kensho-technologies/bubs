@@ -1,7 +1,6 @@
 # Copyright 2019 Kensho Technologies, LLC.
 import os
 
-
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import LSTM, Embedding, Lambda, Layer

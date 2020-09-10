@@ -48,9 +48,9 @@ Bubs is named after the author's cat, Bubs (short for Bubbles).
 Below we define a very simple example that outputs contextualized embeddings for the following text: "Bubs is a cat. Bubs is cute.".
 
 ```python
-from keras.layers import Input
-from keras.models import Model
-from keras.optimizers import Adam
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
 
 from bubs import ContextualizedEmbedding, load_weights_from_npz
 from bubs.helpers import InputEncoder
@@ -126,16 +126,6 @@ The embeddings for the word 'cat' are: `forward_embedding[0, -2]` and
 `backward_embedding[0, -2]`
 
 ### Installation
-
-First, install tensorflow or tensorflow-gpu, depending on your system:
-
-```pip install tensorflow-gpu==1.7.1```
-or
-```pip install tensorflow==1.7.1```
-
-Tensorflow versions `1.7.1`, `1.10`, and `1.13.1` pass the tests.
-
-Then, install Bubs:
 
 ```pip install bubs```
 

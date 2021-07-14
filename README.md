@@ -69,13 +69,15 @@ context_embedding_layer = ContextualizedEmbedding(MAX_TOKEN_SEQUENCE_LEN, weight
 forward_input = Input(shape=(None,), name="forward_input", dtype="int16")
 backward_input = Input(shape=(None,), name="backward_input", dtype="int16")
 forward_index_input = Input(
-    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 2), name="forward_index_input", dtype="int32"
+    # batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 2), name="forward_index_input", dtype="int32"
+    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 1), name="forward_index_input", dtype="int32"
 )
 forward_mask_input = Input(
     batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN), name="forward_mask_input", dtype="float32"
 )
 backward_index_input = Input(
-    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 2), name="backward_index_input", dtype="int32"
+    # batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 2), name="backward_index_input", dtype="int32"
+    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 1), name="backward_index_input", dtype="int32"
 )
 backward_mask_input = Input(
     batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN), name="backward_mask_input", dtype="float32"

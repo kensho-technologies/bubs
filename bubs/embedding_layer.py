@@ -98,7 +98,8 @@ def batch_indexing(inputs):
     embeddings, indices = inputs
     # this will break on deserialization if we simply import tensorflow
     # we have to use keras.backend.tf instead of tensorflow
-    return tf.gather_nd(embeddings, indices)
+    # return tf.gather_nd(embeddings, indices)
+    return tf.gather_nd(embeddings, indices, batch_dims=1)
 
 
 def multiply(inputs):
@@ -222,6 +223,17 @@ class ContextualizedEmbedding(Layer):
             [backward_indexed_lstm_output, backward_mask_input]
         )
         return [forward_output, backward_output]
+
+     def compute_mask(self, inputs, mask=None):
+        (
+            forward_input,
+            backward_input,
+            forward_index_input,
+            backward_index_input,
+            forward_mask_input,
+            backward_mask_input,
+        ) = inputs
+        return [forward_mask_input, backward_mask_input]
 
     def compute_output_shape(self, input_shape):
         """Output shape is (batch size) x (number of tokens) x (character lstm dimension)."""

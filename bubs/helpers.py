@@ -9,13 +9,16 @@ from .tokenizer import RegexTokenizer
 class InputEncoder:
     """Object that prepares inputs to the ContextualizedEmbedding layer from text."""
 
-    def __init__(self, max_token_sequence_len, max_char_sequence_len):
+    def __init__(self, max_token_sequence_len, max_char_sequence_len, prepad=True):
         """Initialize and look up a few special character codes from CHAR_TO_INT."""
         self.max_token_sequence_len = max_token_sequence_len
         self.max_char_sequence_len = max_char_sequence_len
 
         # Parameters related to character encoding, all from char_to_int
         self.char_to_int = CHAR_TO_INT
+
+        # default is pre-pad
+        self.prepad = prepad
 
     @property
     def start_sentence_value(self,):
@@ -214,11 +217,17 @@ class InputEncoder:
         pad_len = self.max_token_sequence_len
         batch_size = len(index_list)
         padding_index = 0
-        padded_sentences = np.full((batch_size, pad_len, 2), padding_index, dtype=np.int32)
+        # padded_sentences = np.full((batch_size, pad_len, 2), padding_index, dtype=np.int32)
+        padded_sentences = np.full((batch_size, pad_len, 1), padding_index, dtype=np.int32)
         for i in range(batch_size):
             clipped_len = min(len(index_list[i]), pad_len)
-            padded_sentences[i, :, 0] = i
-            padded_sentences[i, pad_len - clipped_len:, 1] = index_list[i][:clipped_len]
+            # padded_sentences[i, :, 0] = i
+            if self.prepad:
+                # padded_sentences[i, pad_len - clipped_len:, 1] = index_list[i][:clipped_len]
+                padded_sentences[i, pad_len - clipped_len:, 0] = index_list[i][:clipped_len]
+            else:
+                # padded_sentences[i, :clipped_len, 1] = index_list[i][:clipped_len]
+                padded_sentences[i, :clipped_len, 0] = index_list[i][:clipped_len]
         return padded_sentences
 
     def _prepare_mask_array(self, index_list):
@@ -227,7 +236,10 @@ class InputEncoder:
         batch_size = len(index_list)
         mask = np.zeros((batch_size, pad_len))
         for i, inds in enumerate(index_list):
-            mask[i, pad_len - len(inds):] = 1
+            if self.prepad:
+                mask[i, pad_len - len(inds):] = 1
+            else:
+                mask[i, :len(inds)] = 1
         return mask
 
     def _encode_and_get_output_index_list(self, token_list, span_list):

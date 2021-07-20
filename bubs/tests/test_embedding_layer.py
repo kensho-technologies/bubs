@@ -8,7 +8,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
 from ..embedding_layer import (
-    ContextualizedEmbedding, load_weights_from_npz, make_lstm_weights_for_keras
+    ContextualizedEmbedding, load_charmap_from_pickle, load_weights_from_npz, make_lstm_weights_for_keras
 )
 from ..helpers import InputEncoder
 
@@ -18,26 +18,33 @@ class TestEmbeddingLayer(unittest.TestCase):
     def setUpClass(cls):
         cls.max_token_seq_len = 5
         cls.max_char_seq_len = 20
-        cls.input_encoder = InputEncoder(cls.max_token_seq_len, cls.max_char_seq_len)
+        cls.prepad = True
 
         cur_path = os.path.dirname(os.path.abspath(__file__))
+
+        charmap_filename = "dummy_charmap.pkl"
+        charmap_path = os.path.join(cur_path, charmap_filename)
+        cls.char_to_int = load_charmap_from_pickle(charmap_path)
+        cls.char_vocab_len = len(cls.char_to_int)
+        cls.input_encoder = InputEncoder(cls.char_to_int, cls.max_token_seq_len, cls.max_char_seq_len, cls.prepad)
+
         weights_filename = "dummy_weights.npz"
         weights_path = os.path.join(cur_path, weights_filename)
         weights = load_weights_from_npz(weights_path)
 
-        cls.context_embedding_layer = ContextualizedEmbedding(cls.max_token_seq_len, weights)
+        cls.context_embedding_layer = ContextualizedEmbedding(cls.char_vocab_len, cls.max_token_seq_len, weights)
 
         # Define a dummy model with just inputs and ContextualizedEmbedding Layer
         forward_input = Input(shape=(None,), name="forward_input", dtype="int16")
         backward_input = Input(shape=(None,), name="backward_input", dtype="int16")
         forward_index_input = Input(
-            batch_shape=(None, cls.max_token_seq_len, 2), name="forward_index_input", dtype="int32"
+            batch_shape=(None, cls.max_token_seq_len, 1), name="forward_index_input", dtype="int32"
         )
         forward_mask_input = Input(
             batch_shape=(None, cls.max_token_seq_len), name="forward_mask_input", dtype="float32"
         )
         backward_index_input = Input(
-            batch_shape=(None, cls.max_token_seq_len, 2), name="backward_index_input", dtype="int32"
+            batch_shape=(None, cls.max_token_seq_len, 1), name="backward_index_input", dtype="int32"
         )
         backward_mask_input = Input(
             batch_shape=(None, cls.max_token_seq_len), name="backward_mask_input", dtype="float32"
@@ -61,10 +68,12 @@ class TestEmbeddingLayer(unittest.TestCase):
         )
         cls.model.compile(optimizer=Adam(), loss="categorical_crossentropy")
 
-    def test_default_weights(self):
+    def test_default_charmap_and_weights(self):
+        # check that default charmap get loaded ok
+        char_to_int = load_charmap_from_pickle()
         # check that default weights get loaded ok
         weights = load_weights_from_npz()
-        context_embedding_layer = ContextualizedEmbedding(self.max_token_seq_len, weights)  # noqa
+        context_embedding_layer = ContextualizedEmbedding(len(char_to_int), self.max_token_seq_len, weights)  # noqa
 
     def test_custom_layer(self):
         """Build a dummy Keras model using the custom layer. Check the output dimensions."""
@@ -82,6 +91,9 @@ class TestEmbeddingLayer(unittest.TestCase):
             )
             self.assertTupleEqual(expected_embedding_shape, forward_embedding.shape)
             self.assertTupleEqual(expected_embedding_shape, backward_embedding.shape)
+        expected_embedding_mask = (None, self.max_token_seq_len)
+        self.assertTupleEqual(expected_embedding_mask, tuple(self.model.output_mask[0].shape))
+        self.assertTupleEqual(expected_embedding_mask, tuple(self.model.output_mask[1].shape))
 
     def test_make_lstm_weights_for_keras(self):
         """Define a few asymmetric matrices, distinct from each other, as dummy weights."""

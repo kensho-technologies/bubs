@@ -1,0 +1,45 @@
+name: Tests and lint
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - "*"
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+    steps:
+      - name: Install Python dependencies
+        run: |
+          pipenv install --dev --deploy --system
+          pip install -e .
+      - name: Run lint checks
+        run: |
+          pipenv run ./scripts/lint.sh ${{ matrix.lint-flags }}
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        markers: ["not slow", "slow"]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Python dependencies
+        run: |
+          pipenv install --dev --deploy --system
+          pip install -e .
+      - name: Test with pytest
+        run: |
+          pytest --cov=bubs bubs/tests -m '${{ matrix.markers }}'
+          codecov

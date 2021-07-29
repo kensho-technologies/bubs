@@ -3,6 +3,7 @@ import unittest
 
 import funcy
 import numpy as np
+import os
 
 from ..helpers import (
     InputEncoder, _align_sentence_spans_for_long_sentences, _check_token_spans, _pad_sentences,
@@ -10,6 +11,7 @@ from ..helpers import (
     create_document_indices_from_sentence_indices, get_space_joined_indices_from_token_lists,
     split_sentences_and_tokenize_raw_text
 )
+from ..embedding_layer import load_charmap_from_pickle
 
 
 class TestHelpers(unittest.TestCase):
@@ -17,7 +19,12 @@ class TestHelpers(unittest.TestCase):
     def setUpClass(cls):
         cls.max_token_seq_len = 5
         cls.max_char_seq_len = 10
-        cls.input_encoder = InputEncoder(cls.max_token_seq_len, cls.max_char_seq_len)
+        cur_path = os.path.dirname(os.path.abspath(__file__))
+        charmap_filename = "dummy_charmap.pkl"
+        charmap_path = os.path.join(cur_path, charmap_filename)
+        cls.char_to_int = load_charmap_from_pickle(charmap_path)
+        cls.prepad = True
+        cls.input_encoder = InputEncoder(cls.char_to_int, cls.max_token_seq_len, cls.max_char_seq_len, cls.prepad)
 
     def test_input_batches_from_raw_text(self):
 
@@ -68,11 +75,11 @@ class TestHelpers(unittest.TestCase):
             )
             self.assertTupleEqual(
                 batch["forward_index_input"].shape,
-                (expected_num_trimmed_sentences, self.max_token_seq_len, 2),  # 2 for (row, col)
+                (expected_num_trimmed_sentences, self.max_token_seq_len, 1),  # 2 for (row, col)
             )
             self.assertTupleEqual(
                 batch["backward_index_input"].shape,
-                (expected_num_trimmed_sentences, self.max_token_seq_len, 2),  # 2 for (row, col)
+                (expected_num_trimmed_sentences, self.max_token_seq_len, 1),  # 2 for (row, col)
             )
             self.assertTupleEqual(
                 batch["forward_mask_input"].shape,
@@ -158,54 +165,66 @@ class TestHelpers(unittest.TestCase):
                 np.testing.assert_equal(expected_inputs[key], inputs[key])
 
     def test_prepare_inputs_from_pretokenized(self):
+        # when prepad=False
         tokenized_sentences = [["abb", "a", "."]]
+        self.input_encoder.prepad = False
         received_inputs = self.input_encoder.prepare_inputs_from_pretokenized(tokenized_sentences)
         expected_forward_input = np.array([[17, 6, 21, 21, 1, 6, 1, 18, 1]], dtype=np.int16)
         expected_backward_input = np.array([[17, 18, 1, 6, 1, 21, 21, 6, 1]], dtype=np.int16)
         expected_forward_index_input = np.array(
-            [[[0, 0], [0, 0], [0, 4], [0, 6], [0, 8]]], dtype=np.int32
+            [[[4], [6], [8], [0], [0]]], dtype=np.int32
         )
         expected_backward_index_input = np.array(
-            [[[0, 0], [0, 0], [0, 8], [0, 4], [0, 2]]], dtype=np.int32
+            [[[8], [4], [2], [0], [0]]], dtype=np.int32
+        )
+        expected_forward_mask_input = np.array([[1.0, 1.0, 1.0, 0.0, 0.0]], dtype=np.float64)
+        expected_backward_mask_input = np.array([[1.0, 1.0, 1.0, 0.0, 0.0]], dtype=np.float64)
+
+        np.testing.assert_equal(expected_forward_input, received_inputs["forward_input"])
+        np.testing.assert_equal(expected_backward_input, received_inputs["backward_input"])
+        np.testing.assert_equal(expected_forward_index_input, received_inputs["forward_index_input"])
+        np.testing.assert_equal(expected_backward_index_input, received_inputs["backward_index_input"])
+        np.testing.assert_equal(expected_forward_mask_input, received_inputs["forward_mask_input"])
+        np.testing.assert_equal(expected_backward_mask_input, received_inputs["backward_mask_input"])
+
+        # when prepad=True
+        tokenized_sentences = [["abb", "a", "."]]
+        self.input_encoder.prepad = True
+        received_inputs = self.input_encoder.prepare_inputs_from_pretokenized(tokenized_sentences)
+        expected_forward_input = np.array([[17, 6, 21, 21, 1, 6, 1, 18, 1]], dtype=np.int16)
+        expected_backward_input = np.array([[17, 18, 1, 6, 1, 21, 21, 6, 1]], dtype=np.int16)
+        expected_forward_index_input = np.array(
+            [[[0], [0], [4], [6], [8]]], dtype=np.int32
+        )
+        expected_backward_index_input = np.array(
+            [[[0], [0], [8], [4], [2]]], dtype=np.int32
         )
         expected_forward_mask_input = np.array([[0.0, 0.0, 1.0, 1.0, 1.0]], dtype=np.float64)
         expected_backward_mask_input = np.array([[0.0, 0.0, 1.0, 1.0, 1.0]], dtype=np.float64)
 
         np.testing.assert_equal(expected_forward_input, received_inputs["forward_input"])
         np.testing.assert_equal(expected_backward_input, received_inputs["backward_input"])
-        np.testing.assert_equal(
-            expected_forward_index_input, received_inputs["forward_index_input"]
-        )
-        np.testing.assert_equal(
-            expected_backward_index_input, received_inputs["backward_index_input"]
-        )
+        np.testing.assert_equal(expected_forward_index_input, received_inputs["forward_index_input"])
+        np.testing.assert_equal(expected_backward_index_input, received_inputs["backward_index_input"])
         np.testing.assert_equal(expected_forward_mask_input, received_inputs["forward_mask_input"])
-        np.testing.assert_equal(
-            expected_backward_mask_input, received_inputs["backward_mask_input"]
-        )
+        np.testing.assert_equal(expected_backward_mask_input, received_inputs["backward_mask_input"])
 
         # test with an empty sentence
         tokenized_sentences = []
         received_inputs = self.input_encoder.prepare_inputs_from_pretokenized(tokenized_sentences)
         expected_forward_input = np.empty(shape=(0, 2), dtype=np.int16)
         expected_backward_input = np.empty(shape=(0, 2), dtype=np.int16)
-        expected_forward_index_input = np.empty(shape=(0, 5, 2), dtype=np.int32)
-        expected_backward_index_input = np.empty(shape=(0, 5, 2), dtype=np.int32)
+        expected_forward_index_input = np.empty(shape=(0, 5, 1), dtype=np.int32)
+        expected_backward_index_input = np.empty(shape=(0, 5, 1), dtype=np.int32)
         expected_forward_mask_input = np.empty(shape=(0, 5), dtype=np.float64)
         expected_backward_mask_input = np.empty(shape=(0, 5), dtype=np.float64)
 
         np.testing.assert_equal(expected_forward_input, received_inputs["forward_input"])
         np.testing.assert_equal(expected_backward_input, received_inputs["backward_input"])
-        np.testing.assert_equal(
-            expected_forward_index_input, received_inputs["forward_index_input"]
-        )
-        np.testing.assert_equal(
-            expected_backward_index_input, received_inputs["backward_index_input"]
-        )
+        np.testing.assert_equal(expected_forward_index_input, received_inputs["forward_index_input"])
+        np.testing.assert_equal(expected_backward_index_input, received_inputs["backward_index_input"])
         np.testing.assert_equal(expected_forward_mask_input, received_inputs["forward_mask_input"])
-        np.testing.assert_equal(
-            expected_backward_mask_input, received_inputs["backward_mask_input"]
-        )
+        np.testing.assert_equal(expected_backward_mask_input, received_inputs["backward_mask_input"])
 
         # test with an empty token
         tokenized_sentences = [[""]]
@@ -213,26 +232,20 @@ class TestHelpers(unittest.TestCase):
         expected_forward_input = np.array([[17, 1]], dtype=np.int16)
         expected_backward_input = np.array([[17, 1]], dtype=np.int16)
         expected_forward_index_input = np.array(
-            [[[0, 0], [0, 0], [0, 0], [0, 0], [0, 1]]], dtype=np.int32
+            [[[0], [0], [0], [0], [1]]], dtype=np.int32
         )
         expected_backward_index_input = np.array(
-            [[[0, 0], [0, 0], [0, 0], [0, 0], [0, 1]]], dtype=np.int32
+            [[[0], [0], [0], [0], [1]]], dtype=np.int32
         )
         expected_forward_mask_input = np.array([[0.0, 0.0, 0.0, 0.0, 1.0]])
         expected_backward_mask_input = np.array([[0.0, 0.0, 0.0, 0.0, 1.0]])
 
         np.testing.assert_equal(expected_forward_input, received_inputs["forward_input"])
         np.testing.assert_equal(expected_backward_input, received_inputs["backward_input"])
-        np.testing.assert_equal(
-            expected_forward_index_input, received_inputs["forward_index_input"]
-        )
-        np.testing.assert_equal(
-            expected_backward_index_input, received_inputs["backward_index_input"]
-        )
+        np.testing.assert_equal(expected_forward_index_input, received_inputs["forward_index_input"])
+        np.testing.assert_equal(expected_backward_index_input, received_inputs["backward_index_input"])
         np.testing.assert_equal(expected_forward_mask_input, received_inputs["forward_mask_input"])
-        np.testing.assert_equal(
-            expected_backward_mask_input, received_inputs["backward_mask_input"]
-        )
+        np.testing.assert_equal(expected_backward_mask_input, received_inputs["backward_mask_input"])
 
     def test__encode_and_index(self):
         # test with one empty sentence
@@ -396,13 +409,30 @@ class TestHelpers(unittest.TestCase):
         np.testing.assert_array_equal(expected_padded_sentences, padded_sentences)
 
     def test__prepare_index_array(self):
+        # when prepad=False
+        self.input_encoder.prepad = False
         index_list_list = [[5, 3, 2], [0, 1, 2, 3, 4, 5], []]
         # (row, col) pairs, padded from the left
         expected_index_array = np.array(
             [
-                [[0, 0], [0, 0], [0, 5], [0, 3], [0, 2]],
-                [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4]],
-                [[2, 0], [2, 0], [2, 0], [2, 0], [2, 0]],
+                [[5], [3], [2], [0], [0]],
+                [[0], [1], [2], [3], [4]],
+                [[0], [0], [0], [0], [0]],
+            ],
+            dtype=np.int32,
+        )
+        index_array = self.input_encoder._prepare_index_array(index_list_list)
+        np.testing.assert_array_equal(expected_index_array, index_array)
+
+        # when prepad=True
+        index_list_list = [[5, 3, 2], [0, 1, 2, 3, 4, 5], []]
+        self.input_encoder.prepad = True
+        # (row, col) pairs, padded from the left
+        expected_index_array = np.array(
+            [
+                [[0], [0], [5], [3], [2]],
+                [[0], [1], [2], [3], [4]],
+                [[0], [0], [0], [0], [0]],
             ],
             dtype=np.int32,
         )
@@ -410,11 +440,22 @@ class TestHelpers(unittest.TestCase):
         np.testing.assert_array_equal(expected_index_array, index_array)
 
         index_list_list = [[]]
-        expected_index_array = np.array([[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]])
+        expected_index_array = np.array([[[0], [0], [0], [0], [0]]])
         index_array = self.input_encoder._prepare_index_array(index_list_list)
         np.testing.assert_array_equal(expected_index_array, index_array)
 
     def test__prepare_mask_array(self):
+        # when prepad=False
+        self.input_encoder.prepad = False
+        index_list_list = [[5, 3, 2], [0, 1, 2, 3, 4], []]
+        expected_mask_array = np.array(
+            [[1.0, 1.0, 1.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]]
+        )
+        mask_array = self.input_encoder._prepare_mask_array(index_list_list)
+        np.testing.assert_array_equal(expected_mask_array, mask_array)
+
+        # when prepad=True
+        self.input_encoder.prepad = True
         index_list_list = [[5, 3, 2], [0, 1, 2, 3, 4], []]
         expected_mask_array = np.array(
             [[0.0, 0.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]]

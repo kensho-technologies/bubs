@@ -2,16 +2,41 @@
 import os
 
 import numpy as np
+import pickle
 import tensorflow as tf
 from tensorflow.keras.layers import LSTM, Embedding, Lambda, Layer
-
-from .char_to_int import CHAR_TO_INT
 
 
 DEFAULT_WEIGHTS_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "flair_news_fast_weights.npz"
 )
+
+DEFAULT_CHARMAP_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "flair_news_fast_charmap.pkl"
+)
+
+
+def load_charmap_from_pickle(charmap_path=None):
+    """Load char-to-int map for the ContextualizedEmbedding layer and InputEncoder from a pickle archive.
+
+    Args:
+        charmap_path: (optional) path to a pickle file. If None, we will use
+            flair_news_fast_charmap.pkl provided with this package.
+
+    Returns:
+        a dictionary mapping characters to integers
+    """
+    if not charmap_path:
+        charmap_path = DEFAULT_CHARMAP_PATH
+
+    with open(charmap_path, "rb") as f:
+        charmap = pickle.load(f)
+    char_to_int = dict()
+    for key, value in charmap.items():
+        char_to_int[key.decode(encoding="utf-8")] = value
+    return char_to_int
 
 
 def make_lstm_weights_for_keras(
@@ -87,9 +112,9 @@ def batch_indexing(inputs):
         inputs: a list of two tensors:
             tensor1: tensor of (batch_size, max_char_seq_len, char_embed_dim*2) of all char-level
                 embeddings
-            tensor2: tensor of (batch_size, max_token_seq_len, 2) of indices of token ends.
-                Something like [[[0, 1], [0, 5]], [[1, 2], [1, 3]], ...]. The last dimension is 2
-                because pairs of (sentence_index, token_index)
+            tensor2: tensor of (batch_size, max_token_seq_len, 1) of indices of token ends.
+                Something like [[[1], [5]], [[2], [3]], ...]. The last dimension is 1, (token_index),
+                because of tf.gather_nd() with batch_dims=1
 
     Returns:
         A tensor of (batch_size, max_token_seq_len, char_embed_dim*2) of char-level embeddings
@@ -98,7 +123,7 @@ def batch_indexing(inputs):
     embeddings, indices = inputs
     # this will break on deserialization if we simply import tensorflow
     # we have to use keras.backend.tf instead of tensorflow
-    return tf.gather_nd(embeddings, indices)
+    return tf.gather_nd(embeddings, indices, batch_dims=1)
 
 
 def multiply(inputs):
@@ -118,7 +143,7 @@ def multiply(inputs):
 
 
 class ContextualizedEmbedding(Layer):
-    def __init__(self, max_token_sequence_len, custom_weights, **kwargs):
+    def __init__(self, char_vocab_len, max_token_sequence_len, custom_weights, **kwargs):
         """Initialize custom layer, lstm weights and static character embeddings."""
         super().__init__(**kwargs)
 
@@ -126,7 +151,7 @@ class ContextualizedEmbedding(Layer):
         self.max_token_sequence_len = max_token_sequence_len
 
         # Look up length of the known character vocabulary
-        self._char_vocab_len = len(CHAR_TO_INT)
+        self._char_vocab_len = char_vocab_len
 
         self._forward_lstm_weights = custom_weights["forward_lstm_weights"]
         self._backward_lstm_weights = custom_weights["backward_lstm_weights"]
@@ -144,6 +169,7 @@ class ContextualizedEmbedding(Layer):
         self.backward_char_lstm_layer = None
         self.indexing_layer = None
         self.mask_multiply_layer = None
+        self.supports_masking = True
 
     def build(self, input_shape):
         """Build custom layer."""
@@ -192,7 +218,7 @@ class ContextualizedEmbedding(Layer):
         )
         super().build(input_shape)
 
-    def call(self, inputs):
+    def call(self, inputs, **kwargs):
         """Compute forward and backward character-level contextualized embeddings from inputs."""
         (
             forward_input,
@@ -223,6 +249,17 @@ class ContextualizedEmbedding(Layer):
         )
         return [forward_output, backward_output]
 
+    def compute_mask(self, inputs, mask=None):
+        (
+            forward_input,
+            backward_input,
+            forward_index_input,
+            backward_index_input,
+            forward_mask_input,
+            backward_mask_input,
+        ) = inputs
+        return [forward_mask_input, backward_mask_input]
+
     def compute_output_shape(self, input_shape):
         """Output shape is (batch size) x (number of tokens) x (character lstm dimension)."""
         shape = (input_shape[2][0], input_shape[2][1], self._char_lstm_dim)
@@ -231,6 +268,7 @@ class ContextualizedEmbedding(Layer):
     def get_config(self):
         """Necessary in case we want to serialize a model including this custom layer."""
         base_config = super().get_config()
+        base_config["char_vocab_len"] = self._char_vocab_len
         base_config["max_token_sequence_len"] = self.max_token_sequence_len
         base_config["custom_weights"] = dict({
             "forward_lstm_weights": self._forward_lstm_weights,

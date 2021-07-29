@@ -52,7 +52,7 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
-from bubs import ContextualizedEmbedding, load_weights_from_npz
+from bubs import ContextualizedEmbedding, load_charmap_from_pickle, load_weights_from_npz
 from bubs.helpers import InputEncoder
 
 
@@ -62,20 +62,21 @@ MAX_CHAR_SEQUENCE_LEN = 2500
 """Load the default weights (provided with this package). If you would like to provide your own 
 weights, you may pass a path to the weights npz file to the load_weights_from_npz() function.
 """
+char_to_int = load_charmap_from_pickle()
 weights = load_weights_from_npz()
-context_embedding_layer = ContextualizedEmbedding(MAX_TOKEN_SEQUENCE_LEN, weights)
+context_embedding_layer = ContextualizedEmbedding(len(char_to_int), MAX_TOKEN_SEQUENCE_LEN, weights)
 
 """Required: define inputs to the ContextualizedEmbedding layer"""
 forward_input = Input(shape=(None,), name="forward_input", dtype="int16")
 backward_input = Input(shape=(None,), name="backward_input", dtype="int16")
 forward_index_input = Input(
-    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 2), name="forward_index_input", dtype="int32"
+    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 1), name="forward_index_input", dtype="int32"
 )
 forward_mask_input = Input(
     batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN), name="forward_mask_input", dtype="float32"
 )
 backward_index_input = Input(
-    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 2), name="backward_index_input", dtype="int32"
+    batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN, 1), name="backward_index_input", dtype="int32"
 )
 backward_mask_input = Input(
     batch_shape=(None, MAX_TOKEN_SEQUENCE_LEN), name="backward_mask_input", dtype="float32"
@@ -98,7 +99,7 @@ model.compile(optimizer=Adam(), loss="categorical_crossentropy")
 Now, let's get contextualized embeddings for each token in a couple of sentences.
 ```python
 # Initialize an InputEncoder for creating model inputs from raw text sentences
-input_encoder = InputEncoder(MAX_TOKEN_SEQUENCE_LEN, MAX_CHAR_SEQUENCE_LEN)
+input_encoder = InputEncoder(char_to_int, MAX_TOKEN_SEQUENCE_LEN, MAX_CHAR_SEQUENCE_LEN, prepad=True)
 
 # Embed a couple of test sentences
 raw_text = "Bubs is a cat. Bubs is cute."
